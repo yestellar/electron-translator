@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <link rel="stylesheet" href="../styles/build/index.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div id="search">
+                <input 
+                    type="text" 
+                    v-model="search" 
+                    placeholder="Search" 
+                    @keyup.enter="addResponseToDictionary"
+                />
+                <span class="icon icon_search" v-if="!searchLoading"></span>
+                <span class="icon icon_searching" v-else></span>
+                <div 
+                    class="response"
+                    v-if="response"
+                >
+                    <div class="text">{{ response }}</div>
+                    <span class="tip">Press 'Enter' to add this translation to dictionary</span>
+                </div>
+            </div>
+            <h1>My dictionary <span class="amount">{{ dictionary.length }}</span></h1>
+        </header>
+        <main>
+            <ul 
+                :style="{'max-height': response ? 'calc(100vh - 209px)' : 'calc(100vh - 137px)' }"
+            >
+                <li 
+                    v-for="(item, index) in reverseDictionary"
+                    :key="index"
+                >
+                    <span class="word">{{ item.word }}</span>
+                    <span class="translation">{{ item.translation }}</span>
+                </li>
+            </ul>
+        </main>
+    </div>
+</body>
+</html>
+
+<script>
+new Vue({
+    el: '#app',
+    data: {
+        search: '',
+        searchLoading: false,
+        response: '',
+        dictionary: []
+    },
+    methods: {
+        addResponseToDictionary() {
+            this.dictionary.push({ word: this.search, translation: this.response })
+            const dictionary = JSON.stringify(this.dictionary)
+            window.api.send('update_dictionary', dictionary)
+            this.search = ''
+        }
+    },
+    created() {
+        window.api.send('get_dictionary_request')
+
+        window.api.receive('get_dictionary_response', (res) => {
+            this.dictionary = JSON.parse(res);
+        })
+
+        window.api.receive('search_translation_response', (res) => {
+            this.response = res;
+            this.searchLoading = false;
+        })
+    },
+    computed: {
+        reverseDictionary() {
+            return this.dictionary.reverse()
+        }
+    },
+    watch: {
+        search(search) {
+            if (search.length > 0) {
+                this.searchLoading = true;
+                window.api.send('search_translation_request', search)
+            } else {
+                this.response = ""
+            }
+        }
+    }
+});
+</script>

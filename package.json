@@ -1,0 +1,26 @@
+{
+  "name": "electron-translator",
+  "version": "1.0.0",
+  "description": "Translator app based on Google Translate API",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yestellar/electron-translator.git"
+  },
+  "author": "Dmitry Smirnov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yestellar/electron-translator/issues"
+  },
+  "homepage": "https://github.com/yestellar/electron-translator#readme",
+  "devDependencies": {
+    "electron": "^13.2.1"
+  },
+  "dependencies": {
+    "@google-cloud/translate": "^6.2.7",
+    "axios": "^0.21.1"
+  }
+}
