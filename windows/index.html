@@ -54,7 +54,8 @@ new Vue({
         search: '',
         searchLoading: false,
         response: '',
-        dictionary: []
+        dictionary: [],
+        reverseDictionary: []
     },
     methods: {
         addResponseToDictionary() {
@@ -76,18 +77,18 @@ new Vue({
             this.searchLoading = false;
         })
     },
-    computed: {
-        reverseDictionary() {
-            return this.dictionary.reverse()
-        }
-    },
     watch: {
         search(search) {
-            if (search.length > 0) {
+            if (search.length > 1) {
                 this.searchLoading = true;
                 window.api.send('search_translation_request', search)
             } else {
                 this.response = ""
+            }
+        },
+        dictionary(dictionary) {
+            for (let i = 0; i < dictionary.length; i++) {
+                this.reverseDictionary[i] = dictionary[dictionary.length - 1 - i]
             }
         }
     }
