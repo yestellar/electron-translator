@@ -35,7 +35,7 @@
                 :style="{'max-height': response ? 'calc(100vh - 209px)' : 'calc(100vh - 137px)' }"
             >
                 <li 
-                    v-for="(item, index) in reverseDictionary"
+                    v-for="(item, index) in dictionary"
                     :key="index"
                 >
                     <span class="word">{{ item.word }}</span>
@@ -54,12 +54,11 @@ new Vue({
         search: '',
         searchLoading: false,
         response: '',
-        dictionary: [],
-        reverseDictionary: []
+        dictionary: []
     },
     methods: {
         addResponseToDictionary() {
-            this.dictionary.push({ word: this.search, translation: this.response })
+            this.dictionary.unshift({ word: this.search, translation: this.response })
             const dictionary = JSON.stringify(this.dictionary)
             window.api.send('update_dictionary', dictionary)
             this.search = ''
@@ -84,11 +83,6 @@ new Vue({
                 window.api.send('search_translation_request', search)
             } else {
                 this.response = ""
-            }
-        },
-        dictionary(dictionary) {
-            for (let i = 0; i < dictionary.length; i++) {
-                this.reverseDictionary[i] = dictionary[dictionary.length - 1 - i]
             }
         }
     }
