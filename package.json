@@ -4,7 +4,8 @@
   "description": "Translator app based on Google Translate API",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder"
   },
   "repository": {
     "type": "git",
@@ -17,11 +18,27 @@
   },
   "homepage": "https://github.com/yestellar/electron-translator#readme",
   "devDependencies": {
-    "electron": "^13.2.1"
+    "electron": "^13.2.1",
+    "electron-builder": "^22.11.7"
   },
   "dependencies": {
     "@google-cloud/translate": "^6.2.7",
     "axios": "^0.21.1",
-    "dotenv": "^10.0.0"
+    "clipboardy": "^2.3.0",
+    "v8-compile-cache": "^2.3.0"
+  },
+  "build": {
+    "appId": "com.electron.en-dictionary",
+    "productName": "English Dictionary",
+    "compression": "maximum",
+    "win": {
+      "target": "portable",
+      "icon": "icons/build/icon.ico"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "default",
+      "icon": "icons/build/icon.icns"
+    }
   }
 }

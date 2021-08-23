@@ -82,7 +82,7 @@ header
             border-radius: 5px
             font-size: 16px
 main
-    ul 
+    #list
         overflow-x: hidden
         overflow-y: auto
         li
@@ -90,12 +90,26 @@ main
             display: block
             margin: 0 auto
             background: #fff
-            padding: 10px 20px
+            padding: 10px 20px 10px 50px
             border-radius: 5px
             margin-bottom: 5px
+            position: relative
             &:hover
                 background: #f7f7f7
+                cursor: pointer
             span 
                 display: block
                 &.translation
                     color: #888
+                &.select
+                    position: absolute
+                    top: 50%
+                    transform: translateY(-50%)
+                    left: 20px
+                    width: 15px
+                    height: 15px
+                    border-radius: 100%
+                    background: #fff
+                    border: 1px solid lightgrey
+                    &.selected
+                        background: #7eccc4

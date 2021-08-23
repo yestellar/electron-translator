@@ -1,15 +1,66 @@
+require('v8-compile-cache')
 const {
     app, 
     BrowserWindow,
-    ipcMain
+    ipcMain,
+    Menu,
+    MenuItem,
+    globalShortcut
 } = require('electron')
 
-const url  = require('url')
 const fs = require('fs')
 const path = require('path')
 const translateText = require('./lib/translateText')
+const clipboardy = require('clipboardy')
+
+const isMac = process.platform === 'darwin'
+const menuTemplate = [
+    ...(isMac ? [{
+        label: app.name,
+        submenu: [
+            { role: 'about' },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideothers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' }
+        ]
+        }] : []),
+        {
+            label: 'Edit',
+            submenu: [
+                { role: 'undo' },
+                { role: 'redo' },
+                { type: 'separator' },
+                { role: 'cut' },
+                { role: 'copy' },
+                { role: 'paste' },
+                { role: 'pasteandmatchstyle' },
+                { role: 'delete' },
+                { role: 'selectall' }
+            ]
+        },
+        {
+            label: 'Tools',
+            submenu: [
+                {
+                    label: 'Translate ' + isMac ? '(Command+Shift+V)' : '(Ctrl+Shift+V)',
+                    click: () => {
+                        mainWindow.show();
+                        mainWindow.webContents.send('translate_copied', clipboardy.readSync())
+                    }
+                }
+            ]
+        }
+
+]
 
 let mainWindow = null;
+
+app.setName('English Dictionary')
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -24,6 +75,22 @@ function createWindow() {
     })
 
     mainWindow.loadURL(path.join('file://', __dirname, 'windows/index.html'))
+    
+    const menu = Menu.buildFromTemplate(menuTemplate)
+    Menu.setApplicationMenu(menu)
+
+    const ctxMenu = new Menu()
+    ctxMenu.append(new MenuItem({
+        label: 'Archive selected',
+        click: () => {
+            mainWindow.webContents.send('archive_selected')
+        }
+    }))
+
+    globalShortcut.register('CommandOrControl+Shift+V', () => {
+        mainWindow.show();
+        mainWindow.webContents.send('translate_copied', clipboardy.readSync())
+    })
 
     mainWindow.on('ready-to-show', () => {
         mainWindow.show()
@@ -34,9 +101,16 @@ function createWindow() {
     })
 
     mainWindow.webContents.openDevTools()
+    mainWindow.webContents.on('context-menu', (e, props) => {
+        ctxMenu.popup(mainWindow, props.x, props.y)
+    })
 }
 
 app.on('ready', createWindow)
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
+})
 
 ipcMain.on('get_dictionary_request', (event) => {
     const dictionary = fs.readFileSync(path.join(__dirname, 'assets/dictionary.json'), 'utf8')

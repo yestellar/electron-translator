@@ -7,8 +7,7 @@ contextBridge.exposeInMainWorld(
     {
         send: (channel, data) => {
             // From renderer to main
-            // Whitelist channels
-            let validChannels = [
+            const validChannels = [
                 "get_dictionary_request",
                 "search_translation_request",
                 "update_dictionary"
@@ -19,9 +18,11 @@ contextBridge.exposeInMainWorld(
         },
         receive: (channel, func) => {
             // From main to renderer
-            let validChannels = [
+            const validChannels = [
                 "get_dictionary_response",
-                "search_translation_response"
+                "search_translation_response",
+                "translate_copied",
+                "archive_selected"
             ];
             if (validChannels.includes(channel)) {
                 // Deliberately strip event as it includes `sender` 

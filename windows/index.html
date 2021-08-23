@@ -20,24 +20,24 @@
                 />
                 <span class="icon icon_search" v-if="!searchLoading"></span>
                 <span class="icon icon_searching" v-else></span>
-                <div 
-                    class="response"
-                    v-if="response"
-                >
+                <div class="response" v-if="response">
                     <div class="text">{{ response }}</div>
                     <span class="tip">Press 'Enter' to add this translation to dictionary</span>
                 </div>
             </div>
-            <h1>My dictionary <span class="amount">{{ dictionary.length }}</span></h1>
+            <h1>My dictionary <span class="amount">{{ filteredDictionary.length }}</span></h1>
         </header>
         <main>
             <ul 
+                id="list"
                 :style="{'max-height': response ? 'calc(100vh - 209px)' : 'calc(100vh - 137px)' }"
             >
                 <li 
-                    v-for="(item, index) in dictionary"
+                    v-for="(item, index) in filteredDictionary"
                     :key="index"
+                    @click="toggleSelection(index)"
                 >
+                    <span class="select" :ref="'select_' + index"></span>
                     <span class="word">{{ item.word }}</span>
                     <span class="translation">{{ item.translation }}</span>
                 </li>
@@ -54,14 +54,30 @@ new Vue({
         search: '',
         searchLoading: false,
         response: '',
-        dictionary: []
+        dictionary: [],
+        searchTimer: null,
+        selected: [],
+        listType: 'dictionary',
+        notificationTimer: null
     },
     methods: {
         addResponseToDictionary() {
-            this.dictionary.unshift({ word: this.search, translation: this.response })
+            this.dictionary.unshift({ 
+                word: this.search, 
+                translation: this.response,
+                archived: false
+            })
             const dictionary = JSON.stringify(this.dictionary)
             window.api.send('update_dictionary', dictionary)
             this.search = ''
+        },
+        toggleSelection(index) {
+            if (this.selected.includes(index)) {
+                this.selected = this.selected.filter(i => i !== index)
+            } else {
+                this.selected.push(index)
+            }    
+            this.$refs['select_' + index][0].classList.toggle('selected');
         }
     },
     created() {
@@ -69,22 +85,69 @@ new Vue({
 
         window.api.receive('get_dictionary_response', (res) => {
             this.dictionary = JSON.parse(res);
+            console.log(this.dictionary);
         })
 
         window.api.receive('search_translation_response', (res) => {
             this.response = res;
             this.searchLoading = false;
         })
+
+        window.api.receive('translate_copied', (search) => {
+            this.search = search;
+        })
+
+        window.api.receive('archive_selected', () => {
+            for (let i = 0; i < this.selected.length; i++) {
+                const index = this.selected[i];
+                const translation = this.dictionary[index];
+                this.dictionary.splice(index, 1, { ...translation, archived: true })
+            }
+            const dictionary = JSON.stringify(this.dictionary)
+            window.api.send('update_dictionary', dictionary)
+            this.selected = []
+        })
+
+        this.notificationTimer = setInterval(() => {
+            if (this.dictionary.length > 0) {
+                const dictionary = this.dictionary.filter(item => !item.archived)
+                const randomTranslation = dictionary[Math.floor(Math.random() * dictionary.length)]
+    
+                new Notification(randomTranslation.word, {
+                    body: randomTranslation.translation,
+                    silent: true
+                })
+            }
+        }, 30000)
+    },
+    beforeUnmount() {
+        clearInterval(this.notificationTimer)
     },
     watch: {
         search(search) {
+            clearTimeout(this.searchTimer)
+            
             if (search.length > 1) {
-                this.searchLoading = true;
-                window.api.send('search_translation_request', search)
+                this.searchLoading = true
+                this.searchTimer = setTimeout(() => {
+                    window.api.send('search_translation_request', search)
+                }, 500)
             } else {
                 this.response = ""
             }
+        },
+        filteredDictionary(filteredDictionary) {
+            console.log('filteredDictionary', filteredDictionary);
+        }
+    },
+    computed: {
+        filteredDictionary() {
+            if (this.listType === 'dictionary') {
+                return this.dictionary.filter(item => !item.archived);
+            } else {
+                return this.dictionary.filter(item => item.archived);
+            }
         }
     }
-});
+})
 </script>
